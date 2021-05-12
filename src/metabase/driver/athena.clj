@@ -52,20 +52,25 @@
     (string/starts-with? region "cn-") ".amazonaws.com.cn"
     :else ".amazonaws.com"))
 
-(defmethod sql-jdbc.conn/connection-details->spec :athena [_ {:keys [region access_key secret_key s3_staging_dir workgroup db], :as details}]
+(defmethod sql-jdbc.conn/connection-details->spec :athena [_ {:keys [region access_key secret_key assume_role_arn s3_staging_dir workgroup db], :as details}]
   (-> (merge
        {:classname        "com.simba.athena.jdbc.Driver"
         :subprotocol      "awsathena"
         :subname          (str "//athena." region (endpoint-for-region region) ":443")
         :user             access_key
         :password         secret_key
+        ;; :assume_role_arn  assume_role_arn
         :s3_staging_dir   s3_staging_dir
         :workgroup        workgroup
         :AwsRegion        region
     ; :LogLevel    6
         }
-       (when (string/blank? access_key)
+       (when (and string/blank? access_key string/blank? assume_role_arn)
          {:AwsCredentialsProviderClass "com.simba.athena.amazonaws.auth.DefaultAWSCredentialsProviderChain"})
+       (when (not string/blank? assume_role_arn)
+         {:AwsCredentialsProviderClass "com.simba.athena.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider"
+          :AwsCredentialsProviderArguments (str assume_role_arn ",athenajdbc")
+         })
        (dissoc details :db))
       (sql-jdbc.common/handle-additional-options details, :seperator-style :semicolon)))
 
