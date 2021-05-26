@@ -24,10 +24,10 @@ driver:
         - password
         - name: secret_key
         - display-name: Secret Key
-    # - merge:
-    #   - assume_role_arn
-    #   - display-name: Assume Role ARN
-    #     placeholder: "arn:aws:iam::${account_id}:role/${role_to_assume}"
+    - name: assume_role_arn
+      display-name: Assume role ARN
+      placeholder: "arn:aws:iam::${account_id}:role/${role_to_assume}"
+      default: ""
     - merge:
         - additional-options
         - display-name: Additional Athena connection string options

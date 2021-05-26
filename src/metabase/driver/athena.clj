@@ -59,17 +59,16 @@
         :subname          (str "//athena." region (endpoint-for-region region) ":443")
         :user             access_key
         :password         secret_key
-        ;; :assume_role_arn  assume_role_arn
         :s3_staging_dir   s3_staging_dir
         :workgroup        workgroup
         :AwsRegion        region
     ; :LogLevel    6
         }
-       (when (and string/blank? access_key string/blank? assume_role_arn)
+       (when (and (string/blank? access_key) (string/blank? assume_role_arn))
          {:AwsCredentialsProviderClass "com.simba.athena.amazonaws.auth.DefaultAWSCredentialsProviderChain"})
-       (when (not string/blank? assume_role_arn)
-         {:AwsCredentialsProviderClass "com.simba.athena.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider"
-          :AwsCredentialsProviderArguments (str assume_role_arn ",athenajdbc")
+       (when (not (string/blank? assume_role_arn))
+         {:AwsCredentialsProviderClass "com.amazonaws.custom.athena.jdbc.CustomIAMRoleAssumptionCredentialsProvider"
+          :AwsCredentialsProviderArguments (str access_key "," secret_key "," assume_role_arn "," region)
          })
        (dissoc details :db))
       (sql-jdbc.common/handle-additional-options details, :seperator-style :semicolon)))
